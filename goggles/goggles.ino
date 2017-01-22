@@ -152,10 +152,10 @@ void setup(void)
 /**************************************************************************/
 aci_evt_opcode_t laststatus = ACI_EVT_DISCONNECTED;
 
-void rainbow_loop()
+void goggle_background()
 {
-  uint8_t i, r, g, b, a, c, inner, outer, ep;
-  int     y1, y2, y3, y4, h;
+  uint8_t i, b, a, c;
+  int     h;
   int8_t  y;
 
   // Draw eye background colors
@@ -197,6 +197,14 @@ void rainbow_loop()
   hue -= 3;
 
 #endif
+
+}
+
+void render_eyes()
+{
+  uint8_t i, r, g, b, a, c, inner, outer, ep;
+  int     y1, y2, y3, y4, h;
+  int8_t  y;
 
   // Render current blink (if any) into brightness map
   if(blinkCounter <= blinkFrames * 2) { // In mid-blink?
@@ -292,6 +300,116 @@ void rainbow_loop()
   delay(15);
 }
 
+void bluetooth_background()
+{
+  /* Wait for new data to arrive */
+  uint8_t len = readPacket(&BTLEserial, BLE_READPACKET_TIMEOUT);
+  if (len == 0) return;
+
+  /* Got a packet! */
+  // printHex(packetbuffer, len);
+
+  // Color
+  if (packetbuffer[1] == 'C') {
+    uint8_t red = packetbuffer[2];
+    uint8_t green = packetbuffer[3];
+    uint8_t blue = packetbuffer[4];
+    Serial.print ("RGB #");
+    if (red < 0x10) Serial.print("0");
+    Serial.print(red, HEX);
+    if (green < 0x10) Serial.print("0");
+    Serial.print(green, HEX);
+    if (blue < 0x10) Serial.print("0");
+    Serial.println(blue, HEX);
+
+    for(uint8_t i=0; i<NUMPIXELS; i++) {
+      iColor[i][0] = red;
+      iColor[i][1] = green;
+      iColor[i][2] = blue;
+      // pixels.setPixelColor(i, pixels.Color(red,green,blue));
+    }
+    // pixels.show(); // This sends the updated pixel color to the hardware.
+
+  }
+
+  // Buttons
+  if (packetbuffer[1] == 'B') {
+    uint8_t buttnum = packetbuffer[2] - '0';
+    boolean pressed = packetbuffer[3] - '0';
+    Serial.print ("Button "); Serial.print(buttnum);
+    if (pressed) {
+      Serial.println(" pressed");
+    } else {
+      Serial.println(" released");
+    }
+  }
+
+  //
+  // // GPS Location
+  // if (packetbuffer[1] == 'L') {
+  //   float lat, lon, alt;
+  //   lat = parsefloat(packetbuffer+2);
+  //   lon = parsefloat(packetbuffer+6);
+  //   alt = parsefloat(packetbuffer+10);
+  //   Serial.print("GPS Location\t");
+  //   Serial.print("Lat: "); Serial.print(lat, 4); // 4 digits of precision!
+  //   Serial.print('\t');
+  //   Serial.print("Lon: "); Serial.print(lon, 4); // 4 digits of precision!
+  //   Serial.print('\t');
+  //   Serial.print(alt, 4); Serial.println(" meters");
+  // }
+  //
+  // // Accelerometer
+  // if (packetbuffer[1] == 'A') {
+  //   float x, y, z;
+  //   x = parsefloat(packetbuffer+2);
+  //   y = parsefloat(packetbuffer+6);
+  //   z = parsefloat(packetbuffer+10);
+  //   Serial.print("Accel\t");
+  //   Serial.print(x,12); Serial.print('\t');
+  //   Serial.print(y,12); Serial.print('\t');
+  //   Serial.print(z,12); Serial.println();
+  // }
+  //
+  // // Magnetometer
+  // if (packetbuffer[1] == 'M') {
+  //   float x, y, z;
+  //   x = parsefloat(packetbuffer+2);
+  //   y = parsefloat(packetbuffer+6);
+  //   z = parsefloat(packetbuffer+10);
+  //   Serial.print("Mag\t");
+  //   Serial.print(x,12); Serial.print('\t');
+  //   Serial.print(y,12); Serial.print('\t');
+  //   Serial.print(z,12); Serial.println();
+  // }
+  //
+  // // Gyroscope
+  // if (packetbuffer[1] == 'G') {
+  //   float x, y, z;
+  //   x = parsefloat(packetbuffer+2);
+  //   y = parsefloat(packetbuffer+6);
+  //   z = parsefloat(packetbuffer+10);
+  //   Serial.print("Gyro\t");
+  //   Serial.print(x,12); Serial.print('\t');
+  //   Serial.print(y,12); Serial.print('\t');
+  //   Serial.print(z,12); Serial.println();
+  // }
+  //
+  // // Quaternions
+  // if (packetbuffer[1] == 'Q') {
+  //   float x, y, z, w;
+  //   x = parsefloat(packetbuffer+2);
+  //   y = parsefloat(packetbuffer+6);
+  //   z = parsefloat(packetbuffer+10);
+  //   w = parsefloat(packetbuffer+14);
+  //   Serial.print("Quat\t");
+  //   Serial.print(x,12); Serial.print('\t');
+  //   Serial.print(y,12); Serial.print('\t');
+  //   Serial.print(z,12); Serial.print('\t');
+  //   Serial.print(w,12); Serial.println();
+  // }
+}
+
 void loop()
 {
 
@@ -320,112 +438,10 @@ void loop()
   // If not connected, do rainbow eyes else do a colour
 
   if (status != ACI_EVT_CONNECTED) {
-    rainbow_loop();
-    return;
+    goggle_background();
   } else {
-
-    /* Wait for new data to arrive */
-    uint8_t len = readPacket(&BTLEserial, BLE_READPACKET_TIMEOUT);
-    if (len == 0) return;
-
-    /* Got a packet! */
-    // printHex(packetbuffer, len);
-
-    // Color
-    if (packetbuffer[1] == 'C') {
-      uint8_t red = packetbuffer[2];
-      uint8_t green = packetbuffer[3];
-      uint8_t blue = packetbuffer[4];
-      Serial.print ("RGB #");
-      if (red < 0x10) Serial.print("0");
-      Serial.print(red, HEX);
-      if (green < 0x10) Serial.print("0");
-      Serial.print(green, HEX);
-      if (blue < 0x10) Serial.print("0");
-      Serial.println(blue, HEX);
-
-      for(uint8_t i=0; i<NUMPIXELS; i++) {
-        pixels.setPixelColor(i, pixels.Color(red,green,blue));
-      }
-      pixels.show(); // This sends the updated pixel color to the hardware.
-
-    }
-
-    // Buttons
-    if (packetbuffer[1] == 'B') {
-      uint8_t buttnum = packetbuffer[2] - '0';
-      boolean pressed = packetbuffer[3] - '0';
-      Serial.print ("Button "); Serial.print(buttnum);
-      if (pressed) {
-        Serial.println(" pressed");
-      } else {
-        Serial.println(" released");
-      }
-    }
-    //
-    // // GPS Location
-    // if (packetbuffer[1] == 'L') {
-    //   float lat, lon, alt;
-    //   lat = parsefloat(packetbuffer+2);
-    //   lon = parsefloat(packetbuffer+6);
-    //   alt = parsefloat(packetbuffer+10);
-    //   Serial.print("GPS Location\t");
-    //   Serial.print("Lat: "); Serial.print(lat, 4); // 4 digits of precision!
-    //   Serial.print('\t');
-    //   Serial.print("Lon: "); Serial.print(lon, 4); // 4 digits of precision!
-    //   Serial.print('\t');
-    //   Serial.print(alt, 4); Serial.println(" meters");
-    // }
-    //
-    // // Accelerometer
-    // if (packetbuffer[1] == 'A') {
-    //   float x, y, z;
-    //   x = parsefloat(packetbuffer+2);
-    //   y = parsefloat(packetbuffer+6);
-    //   z = parsefloat(packetbuffer+10);
-    //   Serial.print("Accel\t");
-    //   Serial.print(x,12); Serial.print('\t');
-    //   Serial.print(y,12); Serial.print('\t');
-    //   Serial.print(z,12); Serial.println();
-    // }
-    //
-    // // Magnetometer
-    // if (packetbuffer[1] == 'M') {
-    //   float x, y, z;
-    //   x = parsefloat(packetbuffer+2);
-    //   y = parsefloat(packetbuffer+6);
-    //   z = parsefloat(packetbuffer+10);
-    //   Serial.print("Mag\t");
-    //   Serial.print(x,12); Serial.print('\t');
-    //   Serial.print(y,12); Serial.print('\t');
-    //   Serial.print(z,12); Serial.println();
-    // }
-    //
-    // // Gyroscope
-    // if (packetbuffer[1] == 'G') {
-    //   float x, y, z;
-    //   x = parsefloat(packetbuffer+2);
-    //   y = parsefloat(packetbuffer+6);
-    //   z = parsefloat(packetbuffer+10);
-    //   Serial.print("Gyro\t");
-    //   Serial.print(x,12); Serial.print('\t');
-    //   Serial.print(y,12); Serial.print('\t');
-    //   Serial.print(z,12); Serial.println();
-    // }
-    //
-    // // Quaternions
-    // if (packetbuffer[1] == 'Q') {
-    //   float x, y, z, w;
-    //   x = parsefloat(packetbuffer+2);
-    //   y = parsefloat(packetbuffer+6);
-    //   z = parsefloat(packetbuffer+10);
-    //   w = parsefloat(packetbuffer+14);
-    //   Serial.print("Quat\t");
-    //   Serial.print(x,12); Serial.print('\t');
-    //   Serial.print(y,12); Serial.print('\t');
-    //   Serial.print(z,12); Serial.print('\t');
-    //   Serial.print(w,12); Serial.println();
-    // }
-
+    bluetooth_background();
   }
+
+  render_eyes();
 }
