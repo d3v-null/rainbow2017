@@ -23,14 +23,14 @@ uint8_t packetbuffer[READ_BUFSIZE+1];
     @brief  Casts the four bytes at the specified address to a float
 */
 /**************************************************************************/
-float parsefloat(uint8_t *buffer) 
+float parsefloat(uint8_t *buffer)
 {
   float f = ((float *)buffer)[0];
   return f;
 }
 
 /**************************************************************************/
-/*! 
+/*!
     @brief  Prints a hexadecimal value in plain characters
     @param  data      Pointer to the byte data
     @param  numBytes  Data length in bytes
@@ -39,7 +39,7 @@ float parsefloat(uint8_t *buffer)
 void printHex(const uint8_t * data, const uint32_t numBytes)
 {
   uint32_t szPos;
-  for (szPos=0; szPos < numBytes; szPos++) 
+  for (szPos=0; szPos < numBytes; szPos++)
   {
     Serial.print(F("0x"));
     // Append leading 0 for small values
@@ -66,7 +66,7 @@ void printHex(const uint8_t * data, const uint32_t numBytes)
     @brief  Waits for incoming data and parses it
 */
 /**************************************************************************/
-uint8_t readPacket(Adafruit_BLE_UART *ble, uint16_t timeout) 
+uint8_t readPacket(Adafruit_BLE_UART *ble, uint16_t timeout)
 {
   uint16_t origtimeout = timeout, replyidx = 0;
 
@@ -107,15 +107,15 @@ uint8_t readPacket(Adafruit_BLE_UART *ble, uint16_t timeout)
 
   packetbuffer[replyidx] = 0;  // null term
 
-  if (!replyidx)  // no data or timeout 
+  if (!replyidx)  // no data or timeout
     return 0;
   if (packetbuffer[0] != '!')  // doesn't start with '!' packet beginning
     return 0;
-  
+
   // check checksum!
   uint8_t xsum = 0;
   uint8_t checksum = packetbuffer[replyidx-1];
-  
+
   for (uint8_t i=0; i<replyidx-1; i++) {
     xsum += packetbuffer[i];
   }
@@ -133,5 +133,3 @@ uint8_t readPacket(Adafruit_BLE_UART *ble, uint16_t timeout)
   // checksum passed!
   return replyidx;
 }
-
-
