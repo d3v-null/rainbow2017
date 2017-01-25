@@ -1,8 +1,8 @@
 /*********************************************************************
 This is an example for our nRF8001 Bluetooth Low Energy Breakout
 
-  Pick one up today in the adafruit shop!
-  ------> http://www.adafruit.com/products/1697
+Pick one up today in the adafruit shop!
+------> http://www.adafruit.com/products/1697
 
 Adafruit invests time and resources providing this open source code,
 please support Adafruit and open-source hardware by purchasing
@@ -16,7 +16,7 @@ All text above, and the splash screen below must be included in any redistributi
 #include <SPI.h>
 #include <Adafruit_NeoPixel.h>
 #ifdef __AVR_ATtiny85__ // Trinket, Gemma, etc.
-  #include <avr/power.h>
+#include <avr/power.h>
 #endif
 
 #define NEOPIXPIN               8
@@ -26,18 +26,21 @@ All text above, and the splash screen below must be included in any redistributi
 #define TOP_LED_FIRST  0 // Change these if the first pixel is not
 #define TOP_LED_SECOND 0 // at the top of the first and/or second ring.
 
-#define RAINBOW        0
-#define ECTO           1
+#define RAINBOW        1
+#define ECTO           2
+#define COLOR          3
 
-#define EFFECT         RAINBOW // Choose a visual effect from the names below
+// #define EFFECT         RAINBOW // Choose a visual effect from the names below
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel( (NUMPIXELS * NUMEYES), NEOPIXPIN, NEO_GRB + NEO_KHZ800 );
 
+uint8_t effect = RAINBOW;
+
 const int8_t PROGMEM
-  yCoord[] = { // Vertical coordinate of each pixel.  First pixel is at top.
-    127,117,90,49,0,-49,-90,-117,-127,-117,-90,-49,0,49,90,117 },
-  sine[] = { // Brightness table for ecto effect
-    0, 28, 96, 164, 192, 164, 96, 28, 0, 28, 96, 164, 192, 164, 96, 28 };
+yCoord[] = { // Vertical coordinate of each pixel.  First pixel is at top.
+  127,117,90,49,0,-49,-90,-117,-127,-117,-90,-49,0,49,90,117 },
+sine[] = { // Brightness table for ecto effect
+  0, 28, 96, 164, 192, 164, 96, 28, 0, 28, 96, 164, 192, 164, 96, 28 };
 
 // Eyelid vertical coordinates.  Eyes shut slightly below center.
 #define upperLidTop     130
@@ -47,39 +50,42 @@ const int8_t PROGMEM
 
 // Gamma correction improves appearance of midrange colors
 const uint8_t PROGMEM gamma8[] = {
-      0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-      0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  1,
-      1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,
-      3,  3,  4,  4,  4,  4,  5,  5,  5,  5,  5,  6,  6,  6,  6,  7,
-      7,  7,  8,  8,  8,  9,  9,  9, 10, 10, 10, 11, 11, 11, 12, 12,
-     13, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20,
-     20, 21, 21, 22, 22, 23, 24, 24, 25, 25, 26, 27, 27, 28, 29, 29,
-     30, 31, 31, 32, 33, 34, 34, 35, 36, 37, 38, 38, 39, 40, 41, 42,
-     42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
-     58, 59, 60, 61, 62, 63, 64, 65, 66, 68, 69, 70, 71, 72, 73, 75,
-     76, 77, 78, 80, 81, 82, 84, 85, 86, 88, 89, 90, 92, 93, 94, 96,
-     97, 99,100,102,103,105,106,108,109,111,112,114,115,117,119,120,
-    122,124,125,127,129,130,132,134,136,137,139,141,143,145,146,148,
-    150,152,154,156,158,160,162,164,166,168,170,172,174,176,178,180,
-    182,184,186,188,191,193,195,197,199,202,204,206,209,211,213,215,
-    218,220,223,225,227,230,232,235,237,240,242,245,247,250,252,255
+  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  1,  1,  1,  1,  1,  1,
+  1,  1,  1,  1,  2,  2,  2,  2,  2,  2,  2,  2,  3,  3,  3,  3,
+  3,  3,  4,  4,  4,  4,  5,  5,  5,  5,  5,  6,  6,  6,  6,  7,
+  7,  7,  8,  8,  8,  9,  9,  9, 10, 10, 10, 11, 11, 11, 12, 12,
+  13, 13, 13, 14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20,
+  20, 21, 21, 22, 22, 23, 24, 24, 25, 25, 26, 27, 27, 28, 29, 29,
+  30, 31, 31, 32, 33, 34, 34, 35, 36, 37, 38, 38, 39, 40, 41, 42,
+  42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+  58, 59, 60, 61, 62, 63, 64, 65, 66, 68, 69, 70, 71, 72, 73, 75,
+  76, 77, 78, 80, 81, 82, 84, 85, 86, 88, 89, 90, 92, 93, 94, 96,
+  97, 99,100,102,103,105,106,108,109,111,112,114,115,117,119,120,
+  122,124,125,127,129,130,132,134,136,137,139,141,143,145,146,148,
+  150,152,154,156,158,160,162,164,166,168,170,172,174,176,178,180,
+  182,184,186,188,191,193,195,197,199,202,204,206,209,211,213,215,
+  218,220,223,225,227,230,232,235,237,240,242,245,247,250,252,255
 };
 
 uint32_t
-  iColor[16][3];      // Background colors for eyes
+iColor[16][3];      // Background colors for eyes
 int16_t
-  hue          =   0; // Initial hue around perimeter (0-1535)
+hue          =   0; // Initial hue around perimeter (0-1535)
 uint8_t
-  iBrightness[16],    // Brightness map -- eye colors get scaled by these
-  brightness   = 220, // Global brightness (0-255)
-  blinkFrames  =   5, // Speed of current blink
-  blinkCounter =  30, // Countdown to end of next blink
-  eyePos       = 192, // Current 'resting' eye (pupil) position
-  newEyePos    = 192, // Next eye position when in motion
-  gazeCounter  =  75, // Countdown to next eye movement
-  gazeFrames   =  50; // Duration of eye movement (smaller = faster)
+iBrightness[16],    // Brightness map -- eye colors get scaled by these
+brightness   = 220, // Global brightness (0-255)
+blinkFrames  =   5, // Speed of current blink
+blinkCounter =  30, // Countdown to end of next blink
+eyePos       = 192, // Current 'resting' eye (pupil) position
+newEyePos    = 192, // Next eye position when in motion
+gazeCounter  =  75, // Countdown to next eye movement
+gazeFrames   =  50, // Duration of eye movement (smaller = faster)
+bt_red       = 127,
+bt_green     = 127,
+bt_blue      = 127;
 int8_t
-  eyeMotion    =   0; // Distance from prior to new position
+eyeMotion    =   0; // Distance from prior to new position
 
 #include "Adafruit_BLE_UART.h"
 
@@ -91,7 +97,7 @@ int8_t
 
 Adafruit_BLE_UART BTLEserial = Adafruit_BLE_UART(ADAFRUITBLE_REQ, ADAFRUITBLE_RDY, ADAFRUITBLE_RST);
 
-#define BLE_READPACKET_TIMEOUT         50   // Timeout in ms waiting to read a response
+#define BLE_READPACKET_TIMEOUT         25   // Timeout in ms waiting to read a response
 
 
 // A small helper
@@ -111,7 +117,7 @@ extern uint8_t packetbuffer[];
 
 /**************************************************************************/
 /*!
-    Configure the Arduino and start advertising with the radio
+Configure the Arduino and start advertising with the radio
 */
 /**************************************************************************/
 void setup(void)
@@ -124,11 +130,11 @@ void setup(void)
   Serial.println(F("Initialising the Neopixel module: "));
 
   #ifdef __AVR_ATtiny85__ // Trinket, Gemma, etc.
-    if(F_CPU == 16000000) clock_prescale_set(clock_div_1);
-    // Seed random number generator from an unused analog input:
-    randomSeed(analogRead(2));
+  if(F_CPU == 16000000) clock_prescale_set(clock_div_1);
+  // Seed random number generator from an unused analog input:
+  randomSeed(analogRead(2));
   #else
-    randomSeed(analogRead(A0));
+  randomSeed(analogRead(A0));
   #endif
 
   pixels.begin();
@@ -142,69 +148,168 @@ void setup(void)
   }
   Serial.println( F("OK!") );
 
- // BTLEserial.setDeviceName("ADA_BLE"); /* 7 characters max! */
+  // BTLEserial.setDeviceName("ADA_BLE"); /* 7 characters max! */
 }
 
 /**************************************************************************/
 /*!
-    Constantly checks for new events on the nRF8001
+Constantly checks for new events on the nRF8001
 */
 /**************************************************************************/
 aci_evt_opcode_t laststatus = ACI_EVT_DISCONNECTED;
 
-void goggle_background()
+// void render_background()
+// {
+//
+// }
+//
+// void render_eyes()
+// {
+//
+// }
+
+void bluetooth_update()
 {
-  uint8_t i, b, a, c;
-  int     h;
-  int8_t  y;
 
-  // Draw eye background colors
+      /* Wait for new data to arrive */
+      uint8_t len = readPacket(&BTLEserial, BLE_READPACKET_TIMEOUT);
+      if (len == 0) return;
 
-#if EFFECT == RAINBOW
+      /* Got a packet! */
+      // printHex(packetbuffer, len);
 
-  // This renders a glotating rainbow...a WAY overdone LED effect but
-  // does show the color gamut nicely.
+      // Color
+      if (packetbuffer[1] == 'C') {
+        bt_red = packetbuffer[2];
+        bt_green = packetbuffer[3];
+        bt_blue = packetbuffer[4];
+        Serial.print ("RGB #");
+        if (bt_red < 0x10) Serial.print("0");
+        Serial.print(bt_red, HEX);
+        if (bt_green < 0x10) Serial.print("0");
+        Serial.print(bt_green, HEX);
+        if (bt_blue < 0x10) Serial.print("0");
+        Serial.println(bt_blue, HEX);
+      }
 
-  for(h=hue, i=0; i<16; i++, h += 96) {
-    a = h;
-    switch((h >> 8) % 6) {
-     case 0: iColor[i][0] = 255; iColor[i][1] =   a; iColor[i][2] =   0; break;
-     case 1: iColor[i][0] =  ~a; iColor[i][1] = 255; iColor[i][2] =   0; break;
-     case 2: iColor[i][0] =   0; iColor[i][1] = 255; iColor[i][2] =   a; break;
-     case 3: iColor[i][0] =   0; iColor[i][1] =  ~a; iColor[i][2] = 255; break;
-     case 4: iColor[i][0] =   a; iColor[i][1] =   0; iColor[i][2] = 255; break;
-     case 5: iColor[i][0] = 255; iColor[i][1] =   0; iColor[i][2] =  ~a; break;
-    }
-  }
-  hue += 7;
-  if(hue >= 1536) hue -= 1536;
-
-#elif EFFECT == ECTO
-
-  // A steampunk aesthetic might fare better with this more subdued effect.
-  // Etherial green glow with just a little animation for visual spice.
-
-  a = (hue >> 4) & 15;
-  c =  hue       & 15;
-  for(i=0; i<16; i++) {
-    b = (a + 1) & 15;
-    iColor[i][1] = 255; // Predominantly green
-    iColor[i][0] = (pgm_read_byte(&sine[a]) * (16 - c) +
-                    pgm_read_byte(&sine[b]) *       c  ) >> 4;
-    iColor[i][2] = iColor[i][0] >> 1;
-    a = b;
-  }
-  hue -= 3;
-
-#endif
-
+      // Buttons
+      if (packetbuffer[1] == 'B') {
+        uint8_t buttnum = packetbuffer[2] - '0';
+        boolean pressed = packetbuffer[3] - '0';
+        Serial.print ("Button "); Serial.print(buttnum);
+        if (pressed) {
+          effect = buttnum;
+          Serial.println(" pressed");
+          // switch (buttnum) {
+          //   case 1:
+          //     effect = RAINBOW;
+          //     Serial.println("changing to rainbow");
+          //     break;
+          //   case 2:
+          //     effect = ECTO;
+          //     Serial.println("changing to ecto");
+          //     break;
+          //   case 3:
+          //     effect = COLOR;
+          //     Serial.println("changing to color");
+          //     break;
+          // }
+        } else {
+          Serial.println(" released");
+        }
+      }
 }
 
-void render_eyes()
+void loop()
 {
   uint8_t i, r, g, b, a, c, inner, outer, ep;
   int     y1, y2, y3, y4, h;
   int8_t  y;
+
+  // Tell the nRF8001 to do whatever it should be working on.
+  BTLEserial.pollACI();
+
+  // Ask what is our current status
+  aci_evt_opcode_t status = BTLEserial.getState();
+  // If the status changed....
+  if (status != laststatus) {
+    // print it out!
+    if (status == ACI_EVT_DEVICE_STARTED) {
+      Serial.println(F("* Advertising started"));
+    }
+    if (status == ACI_EVT_CONNECTED) {
+      Serial.println(F("* Connected!"));
+    }
+    if (status == ACI_EVT_DISCONNECTED) {
+      Serial.println(F("* Disconnected or advertising timed out"));
+    }
+    // OK set the last status change to this one
+    laststatus = status;
+  }
+
+  if (status != ACI_EVT_CONNECTED) {
+    delay(15);
+  } else {
+    bluetooth_update();
+
+  }
+  // render_background();
+
+  // Draw eye background colors
+  if(effect == RAINBOW){
+    // #if EFFECT == RAINBOW
+    // Serial.println("rendering rainbow");
+
+
+    // This renders a glotating rainbow...a WAY overdone LED effect but
+    // does show the color gamut nicely.
+
+    for(h=hue, i=0; i<16; i++, h += 96) {
+      a = h;
+      switch((h >> 8) % 6) {
+        case 0: iColor[i][0] = 255; iColor[i][1] =   a; iColor[i][2] =   0; break;
+        case 1: iColor[i][0] =  ~a; iColor[i][1] = 255; iColor[i][2] =   0; break;
+        case 2: iColor[i][0] =   0; iColor[i][1] = 255; iColor[i][2] =   a; break;
+        case 3: iColor[i][0] =   0; iColor[i][1] =  ~a; iColor[i][2] = 255; break;
+        case 4: iColor[i][0] =   a; iColor[i][1] =   0; iColor[i][2] = 255; break;
+        case 5: iColor[i][0] = 255; iColor[i][1] =   0; iColor[i][2] =  ~a; break;
+      }
+    }
+    hue += 7;
+    if(hue >= 1536) hue -= 1536;
+  } else if(effect == ECTO){
+    // Serial.println("rendering ecto");
+
+    // #elif EFFECT == ECTO
+
+    // A steampunk aesthetic might fare better with this more subdued effect.
+    // Etherial green glow with just a little animation for visual spice.
+
+    a = (hue >> 4) & 15;
+    c =  hue       & 15;
+    for(i=0; i<16; i++) {
+      b = (a + 1) & 15;
+      iColor[i][1] = 255; // Predominantly green
+      iColor[i][0] = (pgm_read_byte(&sine[a]) * (16 - c) +
+        pgm_read_byte(&sine[b]) *       c  ) >> 4;
+      iColor[i][2] = iColor[i][0] >> 1;
+      a = b;
+    }
+    hue -= 3;
+
+    // #endif
+  } else if(effect == COLOR){
+    // Serial.println("rendering color");
+
+    for(uint8_t i=0; i<NUMPIXELS; i++) {
+      iColor[i][0] = bt_red;
+      iColor[i][1] = bt_green;
+      iColor[i][2] = bt_blue;
+      // pixels.setPixelColor(i, pixels.Color(red,green,blue));
+    }
+  }
+
+  // render_eyes();
 
   // Render current blink (if any) into brightness map
   if(blinkCounter <= blinkFrames * 2) { // In mid-blink?
@@ -296,152 +401,4 @@ void render_eyes()
       pgm_read_byte(&gamma8[b]));
   }
   pixels.show();
-
-  delay(15);
-}
-
-void bluetooth_background()
-{
-  /* Wait for new data to arrive */
-  uint8_t len = readPacket(&BTLEserial, BLE_READPACKET_TIMEOUT);
-  if (len == 0) return;
-
-  /* Got a packet! */
-  // printHex(packetbuffer, len);
-
-  // Color
-  if (packetbuffer[1] == 'C') {
-    uint8_t red = packetbuffer[2];
-    uint8_t green = packetbuffer[3];
-    uint8_t blue = packetbuffer[4];
-    Serial.print ("RGB #");
-    if (red < 0x10) Serial.print("0");
-    Serial.print(red, HEX);
-    if (green < 0x10) Serial.print("0");
-    Serial.print(green, HEX);
-    if (blue < 0x10) Serial.print("0");
-    Serial.println(blue, HEX);
-
-    for(uint8_t i=0; i<NUMPIXELS; i++) {
-      iColor[i][0] = red;
-      iColor[i][1] = green;
-      iColor[i][2] = blue;
-      // pixels.setPixelColor(i, pixels.Color(red,green,blue));
-    }
-    // pixels.show(); // This sends the updated pixel color to the hardware.
-
-  }
-
-  // Buttons
-  if (packetbuffer[1] == 'B') {
-    uint8_t buttnum = packetbuffer[2] - '0';
-    boolean pressed = packetbuffer[3] - '0';
-    Serial.print ("Button "); Serial.print(buttnum);
-    if (pressed) {
-      Serial.println(" pressed");
-    } else {
-      Serial.println(" released");
-    }
-  }
-
-  //
-  // // GPS Location
-  // if (packetbuffer[1] == 'L') {
-  //   float lat, lon, alt;
-  //   lat = parsefloat(packetbuffer+2);
-  //   lon = parsefloat(packetbuffer+6);
-  //   alt = parsefloat(packetbuffer+10);
-  //   Serial.print("GPS Location\t");
-  //   Serial.print("Lat: "); Serial.print(lat, 4); // 4 digits of precision!
-  //   Serial.print('\t');
-  //   Serial.print("Lon: "); Serial.print(lon, 4); // 4 digits of precision!
-  //   Serial.print('\t');
-  //   Serial.print(alt, 4); Serial.println(" meters");
-  // }
-  //
-  // // Accelerometer
-  // if (packetbuffer[1] == 'A') {
-  //   float x, y, z;
-  //   x = parsefloat(packetbuffer+2);
-  //   y = parsefloat(packetbuffer+6);
-  //   z = parsefloat(packetbuffer+10);
-  //   Serial.print("Accel\t");
-  //   Serial.print(x,12); Serial.print('\t');
-  //   Serial.print(y,12); Serial.print('\t');
-  //   Serial.print(z,12); Serial.println();
-  // }
-  //
-  // // Magnetometer
-  // if (packetbuffer[1] == 'M') {
-  //   float x, y, z;
-  //   x = parsefloat(packetbuffer+2);
-  //   y = parsefloat(packetbuffer+6);
-  //   z = parsefloat(packetbuffer+10);
-  //   Serial.print("Mag\t");
-  //   Serial.print(x,12); Serial.print('\t');
-  //   Serial.print(y,12); Serial.print('\t');
-  //   Serial.print(z,12); Serial.println();
-  // }
-  //
-  // // Gyroscope
-  // if (packetbuffer[1] == 'G') {
-  //   float x, y, z;
-  //   x = parsefloat(packetbuffer+2);
-  //   y = parsefloat(packetbuffer+6);
-  //   z = parsefloat(packetbuffer+10);
-  //   Serial.print("Gyro\t");
-  //   Serial.print(x,12); Serial.print('\t');
-  //   Serial.print(y,12); Serial.print('\t');
-  //   Serial.print(z,12); Serial.println();
-  // }
-  //
-  // // Quaternions
-  // if (packetbuffer[1] == 'Q') {
-  //   float x, y, z, w;
-  //   x = parsefloat(packetbuffer+2);
-  //   y = parsefloat(packetbuffer+6);
-  //   z = parsefloat(packetbuffer+10);
-  //   w = parsefloat(packetbuffer+14);
-  //   Serial.print("Quat\t");
-  //   Serial.print(x,12); Serial.print('\t');
-  //   Serial.print(y,12); Serial.print('\t');
-  //   Serial.print(z,12); Serial.print('\t');
-  //   Serial.print(w,12); Serial.println();
-  // }
-}
-
-void loop()
-{
-
-
-  // Tell the nRF8001 to do whatever it should be working on.
-  BTLEserial.pollACI();
-
-  // Ask what is our current status
-  aci_evt_opcode_t status = BTLEserial.getState();
-  // If the status changed....
-  if (status != laststatus) {
-    // print it out!
-    if (status == ACI_EVT_DEVICE_STARTED) {
-        Serial.println(F("* Advertising started"));
-    }
-    if (status == ACI_EVT_CONNECTED) {
-        Serial.println(F("* Connected!"));
-    }
-    if (status == ACI_EVT_DISCONNECTED) {
-        Serial.println(F("* Disconnected or advertising timed out"));
-    }
-    // OK set the last status change to this one
-    laststatus = status;
-  }
-
-  // If not connected, do rainbow eyes else do a colour
-
-  if (status != ACI_EVT_CONNECTED) {
-    goggle_background();
-  } else {
-    bluetooth_background();
-  }
-
-  render_eyes();
 }

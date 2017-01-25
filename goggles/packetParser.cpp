@@ -74,14 +74,14 @@ uint8_t readPacket(Adafruit_BLE_UART *ble, uint16_t timeout)
 
   while (timeout--) {
     if (replyidx >= 20) break;
-    if ((packetbuffer[1] == 'A') && (replyidx == PACKET_ACC_LEN))
-      break;
-    if ((packetbuffer[1] == 'G') && (replyidx == PACKET_GYRO_LEN))
-      break;
-    if ((packetbuffer[1] == 'M') && (replyidx == PACKET_MAG_LEN))
-      break;
-    if ((packetbuffer[1] == 'Q') && (replyidx == PACKET_QUAT_LEN))
-      break;
+    // if ((packetbuffer[1] == 'A') && (replyidx == PACKET_ACC_LEN))
+    //   break;
+    // if ((packetbuffer[1] == 'G') && (replyidx == PACKET_GYRO_LEN))
+    //   break;
+    // if ((packetbuffer[1] == 'M') && (replyidx == PACKET_MAG_LEN))
+    //   break;
+    // if ((packetbuffer[1] == 'Q') && (replyidx == PACKET_QUAT_LEN))
+    //   break;
     if ((packetbuffer[1] == 'B') && (replyidx == PACKET_BUTTON_LEN))
       break;
     if ((packetbuffer[1] == 'C') && (replyidx == PACKET_COLOR_LEN))
